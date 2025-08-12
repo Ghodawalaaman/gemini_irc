@@ -15,8 +15,10 @@ class MyClient(pydle.Client):
 
     async def on_join(self, channel, user):
         await super().on_join(channel, user)
-        response = model.generate_content("Explain how AI works in a few words")
-        await self.message(channel, f'{response.text}')
+        if user == self.nickname:
+            response = model.generate_content("Explain how AI works in a few words")
+            await self.message(channel, f'{response.text}')
+            await self.message(channel, 'SkyNet is activated!')
 
     async def on_message(self, target, source, message):
         if source != self.nickname and message.startswith(f"{self.nickname}"):
