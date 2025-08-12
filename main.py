@@ -1,9 +1,10 @@
-import time
 import asyncio
+import os
 import pydle
-from google import genai
+import google.generativeai as genai
 
-client = genai.Client()
+# Initialize the model
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 class MyClient(pydle.Client):
     """ This is a simple bot that will greet people as they join the channel. """
@@ -14,24 +15,27 @@ class MyClient(pydle.Client):
 
     async def on_join(self, channel, user):
         await super().on_join(channel, user)
-        response = client.models.generate_content(
-            model="gemini-2.5-flash", contents="Explain how AI works in a few words"
-        )
+        response = model.generate_content("Explain how AI works in a few words")
         await self.message(channel, f'{response.text}')
 
     async def on_message(self, target, source, message):
-        if source != "gemini_bot" and "gemini_bot" in message:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash", contents=f"{message}"
-            )
+        if source != self.nickname and message.startswith(f"{self.nickname}"):
+            try:
+               response = model.generate_content(f"{message}")
+            except Exception as e:
+                await self.message(target, f"Error generating response: {e}")
+                return
             lines = response.text.split("\n")
             for line in lines:
-                await self.message(target, f'{line}')
-                time.sleep(0.5)
+                if len(line.strip()) == 0 or line.strip() == "\n":
+                    continue
+                await self.message(target, f'{line.strip()}')
+                await asyncio.sleep(0.5)  # Non-blocking sleep
 
 async def start():
     client = MyClient('gemini_bot')
     await client.connect('irc.libera.chat', tls=True)
     await client.handle_forever()
 
-asyncio.run(start())
+if __name__ == "__main__":
+    asyncio.run(start())
