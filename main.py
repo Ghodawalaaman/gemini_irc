@@ -23,7 +23,7 @@ class MyClient(pydle.Client):
     async def on_message(self, target, source, message):
         if source != self.nickname and message.startswith(f"{self.nickname}"):
             try:
-               response = model.generate_content(f"{message}")
+               response = model.generate_content(f"{message[(len(self.nickname)+1):].strip()}")
             except Exception as e:
                 await self.message(target, f"Error generating response: {e}")
                 return
